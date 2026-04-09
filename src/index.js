@@ -8,7 +8,15 @@ dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 dotenv.config({ path: "./.env" });
 
-connectDB();
+connectDB()
+  .then(() => {
+    app.listen(process.env.PORT || 5000, () => {
+      console.log(`Server is running at port : ${process.env.PORT || 5000} `);
+    });
+  })
+  .catch((error) => {
+    console.log("MOngoDB connection failure!!", error);
+  });
 
 /*
 import express from "express";
