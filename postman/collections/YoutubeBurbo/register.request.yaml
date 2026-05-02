@@ -1,0 +1,5 @@
+$kind: http-request
+name: register
+url: http://localhost:8000/api/v1/users/register
+method: GET
+order: 1777747682283

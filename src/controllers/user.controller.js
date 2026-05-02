@@ -16,31 +16,47 @@ const registerUser = asyncHandler(async (req, res) => {
   // check for user creation v
   // return res v
 
-  const { fullName, email, usernanme, password } = req.body;
+  const { fullName, email, username, password } = req.body;
   console.log(email);
+  console.log("req.files:", req.files);
 
-  if (fullName === "" || email === "" || usernanme === "" || password === "") {
-    throw new ApiError("All fields are required", 400);
+  if (fullName === "" || email === "" || username === "" || password === "") {
+    throw new ApiError(400, "All fields are required");
   }
 
-  const exitUser = User.findOne({
+  const existUser = await User.findOne({
     $or: [{ email }, { username }],
   });
-  if (exitUser) {
-    throw new ApiError("User with same email or username already exists", 409);
+  if (existUser) {
+    throw new ApiError(409, "User with same email or username already exists");
   }
 
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImgLocalpath = req.files?.coverImage[0]?.path;
+  const avatarLocalPath = req.files?.avatar?.[0]?.path;
+  const coverImgLocalPath = req.files?.coverImage?.[0]?.path;
 
   if (!avatarLocalPath) {
-    throw new ApiError("Avatar is required", 400);
+    throw new ApiError(400, "Avatar is required");
   }
 
+  console.log("Uploading avatar from:", avatarLocalPath);
   const avatar = await uploadOnCloudinary(avatarLocalPath);
+  console.log("Avatar upload result:", avatar);
+
+  const coverImage = coverImgLocalPath
+    ? await uploadOnCloudinary(coverImgLocalPath)
+    : null;
+  console.log("CoverImage upload result:", coverImage);
+
   if (!avatar) {
-    throw new ApiError("Avatar is required", 400);
+    throw new ApiError(400, "Avatar upload failed");
   }
+
+  console.log("Creating user with data:", {
+    fullName,
+    email,
+    username,
+    avatar: avatar.url,
+  });
 
   const user = await User.create({
     fullName,
@@ -56,7 +72,7 @@ const registerUser = asyncHandler(async (req, res) => {
   );
 
   if (!createdUser) {
-    throw new ApiError("User creation failed", 500);
+    throw new ApiError(500, "User creation failed");
   }
 
   return res
